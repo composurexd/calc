@@ -40,7 +40,7 @@ public class Calculator {
     // ------  Evaluate RPN expression -------------------
 
     double evalPostfix(List<String> postfix) {
-       // TODO
+        // TODO
         return 0;
     }
 
@@ -64,26 +64,23 @@ public class Calculator {
     }
 
     // ------- Infix 2 Postfix ------------------------
+    Stack<String> stack = new Stack();
 
     List<String> infix2Postfix(List<String> infix) {
-        Stack<String> stack = new Stack();
         List<String> outputString = new ArrayList();
         for (int i = 0; i < infix.size(); i++) {
             String curStr = infix.get(i);
             if (!isOperator(curStr)) {
                 outputString.add(curStr);
             }
-            else if (i == infix.size() - 1) {
-                while (!stack.isEmpty()) {
-                    outputString.add(stack.pop());
-                }
-            }
-            else if (((isOperator(curStr)) && ((getPrecedence(curStr)) == (getPrecedence(stack.peek())))) ||
-                    ((isOperator(curStr)) && ((getPrecedence(curStr)) < (getPrecedence(stack.peek()))))) {
+         //   else if (i == infix.size() - 1) {
+        //        while (!stack.isEmpty()) {
+       //             outputString.add(stack.pop());
+     //           }
+     //       }
+            else if (((isOperator(curStr)) && ((getPrecedence(curStr)) == (stackPeekPrec()))) ||
+                    ((isOperator(curStr)) && ((getPrecedence(curStr)) < (stackPeekPrec())))) {
                 outputString.add(stack.pop());
-                stack.push(curStr);
-            }
-            else {
                 stack.push(curStr);
                 if (i == infix.size() - 1) {
                     while (!stack.isEmpty()) {
@@ -91,14 +88,46 @@ public class Calculator {
                     }
                 }
             }
+            else {
+                stack.push(curStr);
+                if (i == infix.size() - 1) {
+                    while (!stack.isEmpty()) {
+                        outputString.add(stack.pop());
+                        }
+                    }
+                }
             }
-            return outputString;
-            }
+
+        return outputString;
+        }
 
 
+    int stackPeekPrec() {
+        if (stack.isEmpty()) {
+            return -1;
+        }
+        else{
+            return getPrecedence(stack.peek());
+        }
+    }
 
+/*
+    public void handleClosingParenthesis() {
+        while (!isOpeningOperator(stack.peek())) {
+            outputString.add(stack.pop());
+        }
+    }
 
-    public boolean isOperator (String op){
+    public boolean isClosingOperator(String operator) {
+        return ")".equals(operator);
+    }
+
+    public boolean isOpeningOperator(String operator) {
+        return "(".equals(operator);
+    }
+
+*/
+    public boolean isOperator(String op) {
         switch (op) {
             case "+":
                 return true;
@@ -149,7 +178,8 @@ public class Calculator {
 
     List<String> tokenize(String expr) {
         // Here we use a LookAhead and LookBehind
-        String delimiter =  "((?<=[(-+*/)])|(?=[(-+*/)]))";
-        return Arrays.asList(expr.replaceAll("\\s","").split(delimiter));
+        String delimiter = "((?<=[(-+*/)])|(?=[(-+*/)]))";
+        return Arrays.asList(expr.replaceAll("\\s", "").split(delimiter));
     }
 }
+
