@@ -65,43 +65,58 @@ public class Calculator {
 
     // ------- Infix 2 Postfix ------------------------
     Stack<String> stack = new Stack();
+    List<String> outputString = new ArrayList();
 
     List<String> infix2Postfix(List<String> infix) {
-        List<String> outputString = new ArrayList();
+        outputString.clear();
         for (int i = 0; i < infix.size(); i++) {
             String curStr = infix.get(i);
-            if (!isOperator(curStr)) {
+            if (isOpeningOperator(curStr)) {
+                stack.push(curStr);
+            } else if (isClosingOperator(curStr)) {
+                handleClosingParenthesis();
+                emptyStack(i, infix);
+
+            } else if (!isOperator(curStr)) {
                 outputString.add(curStr);
-            }
-         //   else if (i == infix.size() - 1) {
-        //        while (!stack.isEmpty()) {
-       //             outputString.add(stack.pop());
-     //           }
-     //       }
-            else if (((isOperator(curStr)) && ((getPrecedence(curStr)) == (stackPeekPrec()))) ||
-                    ((isOperator(curStr)) && ((getPrecedence(curStr)) < (stackPeekPrec())))) {
+                emptyStack(i, infix);
+
+            } else if (((isOperator(curStr)) && ((getPrecedence(curStr)) < (stackPeekPrec())))) {
                 outputString.add(stack.pop());
                 stack.push(curStr);
-                if (i == infix.size() - 1) {
-                    while (!stack.isEmpty()) {
-                        outputString.add(stack.pop());
-                    }
+                emptyStack(i, infix);
+            }
+            else if (((isOperator(curStr)) && ((getPrecedence(curStr)) == (stackPeekPrec())))) {
+                if (getAssociativity(curStr) == Assoc.LEFT) {
+                    outputString.add(stack.pop());
+                    stack.push(curStr);
+                    emptyStack(i, infix);
+                }
+                else if (getAssociativity(curStr) == Assoc.RIGHT) {
+                    stack.push(curStr);
+                    emptyStack(i, infix);
                 }
             }
             else {
                 stack.push(curStr);
-                if (i == infix.size() - 1) {
-                    while (!stack.isEmpty()) {
-                        outputString.add(stack.pop());
-                        }
-                    }
-                }
+                emptyStack(i, infix);
             }
-
-        return outputString;
         }
 
+        return outputString;
+    }
 
+    void emptyStack(int i, List<String> infix) {
+        if (i == infix.size() - 1) {
+            while (!stack.isEmpty()) {
+                if ("()".contains(stack.peek())) {
+                    stack.pop();
+                } else {
+                    outputString.add(stack.pop());
+                }
+            }
+        }
+    }
     int stackPeekPrec() {
         if (stack.isEmpty()) {
             return -1;
@@ -111,7 +126,7 @@ public class Calculator {
         }
     }
 
-/*
+
     public void handleClosingParenthesis() {
         while (!isOpeningOperator(stack.peek())) {
             outputString.add(stack.pop());
@@ -126,7 +141,7 @@ public class Calculator {
         return "(".equals(operator);
     }
 
-*/
+
     public boolean isOperator(String op) {
         switch (op) {
             case "+":
@@ -152,7 +167,10 @@ public class Calculator {
             return 3;
         } else if ("^".contains(op)) {
             return 4;
-        } else {
+        } else if (("()".contains(op))) {
+            return -2;
+        }
+        else {
             throw new RuntimeException(OP_NOT_FOUND);
         }
     }
@@ -178,7 +196,7 @@ public class Calculator {
 
     List<String> tokenize(String expr) {
         // Here we use a LookAhead and LookBehind
-        String delimiter = "((?<=[(-+*/)])|(?=[(-+*/)]))";
+        String delimiter = "((?<=[-(+*/^)])|(?=[-(+*/^)]))";
         return Arrays.asList(expr.replaceAll("\\s", "").split(delimiter));
     }
 }
