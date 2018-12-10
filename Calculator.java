@@ -3,6 +3,7 @@ package calc;
 import java.util.*;
 
 import static java.lang.Double.NaN;
+import static java.lang.Double.parseDouble;
 import static java.lang.Math.pow;
 
 
@@ -40,8 +41,25 @@ public class Calculator {
     // ------  Evaluate RPN expression -------------------
 
     double evalPostfix(List<String> postfix) {
-        // TODO
-        return 0;
+        int count = 0;
+        for (int i = 0; i < postfix.size(); i++) {
+            String curStr = postfix.get(i);
+            if (!isOperator(curStr)) {
+                stack.push(curStr);
+            } else if (stack.size() <= 1 && isOperator(curStr)) {
+                return 0;
+            }
+            else {
+                stack.push(Double.toString((applyOperator(curStr, Double.parseDouble(stack.pop()), Double.parseDouble(stack.pop())))));
+                count++;
+            }
+        }
+        if (count == 0 && stack.size() > 1) {
+            return 0;
+        }
+        else {
+            return Double.parseDouble(stack.pop());
+        }
     }
 
     double applyOperator(String op, double d1, double d2) {
@@ -69,24 +87,42 @@ public class Calculator {
 
     List<String> infix2Postfix(List<String> infix) {
         outputString.clear();
+        int count = 0;
+        boolean hasOp = false;
+        stack.clear();
         for (int i = 0; i < infix.size(); i++) {
             String curStr = infix.get(i);
             if (isOpeningOperator(curStr)) {
                 stack.push(curStr);
+                count++;
+                if (i == infix.size() - 1) {
+                    outputString.clear();
+                    outputString.add("0");
+                    return outputString;
+                }
             } else if (isClosingOperator(curStr)) {
+                if ((i == infix.size() - 1) && count == 0) {
+                    outputString.clear();
+                    outputString.add("0");
+                    return outputString;
+                }
                 handleClosingParenthesis();
                 emptyStack(i, infix);
+                count--;
 
             } else if (!isOperator(curStr)) {
                 outputString.add(curStr);
                 emptyStack(i, infix);
 
             } else if (((isOperator(curStr)) && ((getPrecedence(curStr)) < (stackPeekPrec())))) {
-                outputString.add(stack.pop());
+                while (!stack.isEmpty()) {
+                    outputString.add(stack.pop());
+                }
                 stack.push(curStr);
                 emptyStack(i, infix);
-            }
-            else if (((isOperator(curStr)) && ((getPrecedence(curStr)) == (stackPeekPrec())))) {
+                hasOp = true;
+            } else if (((isOperator(curStr)) && ((getPrecedence(curStr)) == (stackPeekPrec())))) {
+                hasOp = true;
                 if (getAssociativity(curStr) == Assoc.LEFT) {
                     outputString.add(stack.pop());
                     stack.push(curStr);
@@ -96,11 +132,16 @@ public class Calculator {
                     stack.push(curStr);
                     emptyStack(i, infix);
                 }
-            }
-            else {
+            } else {
                 stack.push(curStr);
                 emptyStack(i, infix);
+                hasOp = true;
             }
+        }
+        if (count > 0 || (!hasOp && "\\s".contains(infix.get(0)))) {
+            outputString.clear();
+            outputString.add("0");
+            return outputString;
         }
 
         return outputString;
@@ -120,8 +161,7 @@ public class Calculator {
     int stackPeekPrec() {
         if (stack.isEmpty()) {
             return -1;
-        }
-        else{
+        } else{
             return getPrecedence(stack.peek());
         }
     }
@@ -140,7 +180,6 @@ public class Calculator {
     public boolean isOpeningOperator(String operator) {
         return "(".equals(operator);
     }
-
 
     public boolean isOperator(String op) {
         switch (op) {
@@ -197,6 +236,9 @@ public class Calculator {
     List<String> tokenize(String expr) {
         // Here we use a LookAhead and LookBehind
         String delimiter = "((?<=[-(+*/^)])|(?=[-(+*/^)]))";
+        if (!("+-/*^".contains(expr)) && "\\s".contains(expr)) {
+            return Arrays.asList("0");
+        }
         return Arrays.asList(expr.replaceAll("\\s", "").split(delimiter));
     }
 }
