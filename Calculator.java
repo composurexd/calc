@@ -88,7 +88,6 @@ public class Calculator {
     List<String> infix2Postfix(List<String> infix) {
         outputString.clear();
         int count = 0;
-        boolean hasOp = false;
         stack.clear();
         for (int i = 0; i < infix.size(); i++) {
             String curStr = infix.get(i);
@@ -120,9 +119,7 @@ public class Calculator {
                 }
                 stack.push(curStr);
                 emptyStack(i, infix);
-                hasOp = true;
             } else if (((isOperator(curStr)) && ((getPrecedence(curStr)) == (stackPeekPrec())))) {
-                hasOp = true;
                 if (getAssociativity(curStr) == Assoc.LEFT) {
                     outputString.add(stack.pop());
                     stack.push(curStr);
@@ -135,10 +132,9 @@ public class Calculator {
             } else {
                 stack.push(curStr);
                 emptyStack(i, infix);
-                hasOp = true;
             }
         }
-        if (count > 0 || (!hasOp && "\\s".contains(infix.get(0)))) {
+        if (count > 0) {
             outputString.clear();
             outputString.add("0");
             return outputString;
